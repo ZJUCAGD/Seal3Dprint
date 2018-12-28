@@ -7,23 +7,25 @@ using System.Drawing.Drawing2D;
 using Poly2Tri;
 using System;
 using System.Linq;
-
+using UnityEngine.UI;
 
 
 public class Font : MonoBehaviour {
+    public static int FontNumber = 0;
+    
     public GameObject Prefab;
     public GameObject prefab2;
     public GameObject FontSelect;
     public GameObject TextMeshPrefab;
-
-    public float Yoffset=10f;
+    public List<GameObject> TextMeshs=new List<GameObject>();
 
     GraphicsPath path;
-    public float GlyphFontSize = 50f;
-    public string str;
+    private float GlyphFontSize = 35f;        //17|90    *150*2=
+    FontFamily testFont;
+    public static string str;
+    public float Yoffset = 10f;
 
     Mesh mesh=null;
-
     Vector3[] vertices;
     int[] triangles;
     Vector2[] uvs;
@@ -84,6 +86,11 @@ public class Font : MonoBehaviour {
         ZaverageLocal = ZaverageLocal / pts.Length;
         Debug.Log("XaverageLocal = " + XaverageLocal);
         Debug.Log("ZaverageLocal = " + ZaverageLocal);
+        for (var i=0;i<pts.Length;i++)              //! 将mesh 的点的重心放在（0,0）
+        {
+            pts[i].X -= XaverageLocal;
+            pts[i].Y -= ZaverageLocal;
+        }
         var start = -1;
         for (var i = 0; i < pts.Length; i++)
         {
@@ -127,12 +134,58 @@ public class Font : MonoBehaviour {
 
     public void OnPressGenerateButton()
     {
-        string str = GameObject.Find("InputField").GetComponent<GetText>().enteredString;
-        string tmp = str.Substring(0,1);
-        GenerateFontMesh(tmp, gameObject);
-        //tmp = str.Substring(1, 1);
-        //GenerateFontMesh(tmp, TextMeshPrefab);
+        testFont = FontSelect.GetComponent<SelectFont>().selectedFont;
+        if (testFont == null)
+        {
+            StartCoroutine(ShowWarning());
+            return;
+        }
+        str = GameObject.Find("InputField").GetComponent<GetText>().enteredString;
+        if(str=="")
+        {
+            StartCoroutine(ShowWarning());
+            return;
+        }
+        if (TextMeshs.Count!=0)
+        {
+            for(int i=TextMeshs.Count-1;i>=0;i--)
+            {
+                GameObject go = TextMeshs[i];
+                TextMeshs.Remove(go);
+                GameObject.Destroy(go);
+            }
+        }
+        else
+        {
+            Debug.Log("没有");
+        }
+        FontNumber = str.Length;
+
+        GameObject.Find("Canvas").transform.Find("DropArea").GetComponent<DropZone>().Spawn();
+
+        for (int i=1;i<=FontNumber;i++)
+        {
+            GameObject go =Instantiate(TextMeshPrefab, transform.position, Quaternion.identity, transform) as GameObject;
+            string tmp = str.Substring(i-1, 1);
+            GenerateFontMesh(tmp, go);
+            float x = DropZone.Icons[i-1].GetComponent<RectTransform>().anchoredPosition.x/150*90;
+            float z = DropZone.Icons[i-1].GetComponent<RectTransform>().anchoredPosition.y/150*90;
+            go.transform.position = new Vector3(x, 0, z);
+            TextMeshs.Add(go);
+        }
     }
+    public void UpdateFontMesh()
+    {
+        if (str == "")
+            return;
+        for (int i = 1; i <= FontNumber; i++)
+        {
+            float x = DropZone.Icons[i - 1].GetComponent<RectTransform>().anchoredPosition.x / 150 * 90;
+            float z = DropZone.Icons[i - 1].GetComponent<RectTransform>().anchoredPosition.y / 150 * 90;
+            TextMeshs[i-1].transform.position = new Vector3(x, 0, -z);
+        }
+    }
+
     public void GenerateFontMesh(string str,GameObject meshObject)
     {
         CurrentIndex = 0;
@@ -140,13 +193,7 @@ public class Font : MonoBehaviour {
 
         mesh = new Mesh();
         meshObject.GetComponent<MeshFilter>().mesh = mesh;
-
-        FontFamily testFont = FontSelect.GetComponent<SelectFont>().selectedFont;
-        if(testFont==null)
-        {
-            Debug.LogError("Not select a Font");
-            return;
-        }
+        
         Debug.Log("testFont.name = " + testFont.Name);
         //str = GameObject.Find("InputField").GetComponent<GetText>().enteredString;
         if(str==null)
@@ -477,5 +524,17 @@ public class Font : MonoBehaviour {
         return inside;
     }
     // Update is called once per frame
-    
+
+
+    IEnumerator ShowWarning()
+    {
+        GameObject.Find("Canvas").transform.Find("FontWarningText").gameObject.SetActive(true);
+        if (testFont!=null)
+            GameObject.Find("Canvas").transform.Find("FontWarningText").GetComponent<Text>().text = "please enter Text!";
+        yield return new WaitForSeconds(1f);
+        GameObject.Find("Canvas").transform.Find("FontWarningText").GetComponent<Text>().text = "please select Font!";
+        GameObject.Find("Canvas").transform.Find("FontWarningText").gameObject.SetActive(false);
+
+    }
+
 }

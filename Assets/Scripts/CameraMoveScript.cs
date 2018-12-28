@@ -36,7 +36,7 @@ public class CameraMoveScript : MonoBehaviour {
 
     void LateUpdate()
     {
-        if (target != null && Input.GetMouseButton(0))
+        if (target != null && Input.GetMouseButton(1))
         {
             mX += Input.GetAxis("Mouse X") * speedX * Time.deltaTime;
             mY -= Input.GetAxis("Mouse Y") * speedY * Time.deltaTime;
