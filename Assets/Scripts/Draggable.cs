@@ -57,8 +57,17 @@ public class Draggable : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
     {
         if (Font.FontNumber % 2 == 1)//字的各位为奇数
         {
-            float index_1_X = -((Font.FontNumber - 1)/2 * (Width + Spacing()));
+            float index_1_X = -(Font.FontNumber - 1)/2.0f * (Width + Spacing());
             PosX = index_1_X + (index - 1) * (Width + Spacing());
+            PosY = 0f;
+            GetComponent<RectTransform>().anchoredPosition = new Vector2(PosX, PosY);
+        }
+        if(Font.FontNumber%2==0)
+        {
+            float index_1_X = -(Font.FontNumber -1)/2.0f * (Width + Spacing());
+            Debug.LogError("Font.FontNumber" + Font.FontNumber);
+            PosX = index_1_X + (index - 1) * (Width + Spacing());
+           
             PosY = 0f;
             GetComponent<RectTransform>().anchoredPosition = new Vector2(PosX, PosY);
         }
